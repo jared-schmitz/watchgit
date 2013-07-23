@@ -21,6 +21,7 @@ int main(int argc, const char *argv[]) {
     printf("Commands:\n"
       "   add <alias> <path>\n"
       "   list\n"
+      "   remove <alias>\n"
       "   status\n");
 
     return 0;
@@ -46,6 +47,15 @@ int main(int argc, const char *argv[]) {
     }
 
     foreach_repo(dbh, print_repo_path);
+  }
+
+  else if (!strcmp(argv[1], "remove")) {
+    if (argc != 3) {
+      printf("Usage: %s remove <alias>\n", argv[0]);
+      return 1;
+    }
+
+    remove_repo_from_db(dbh, argv[2]);
   }
 
   else if (!strcmp(argv[1], "status")) {

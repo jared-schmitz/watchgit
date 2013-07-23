@@ -57,6 +57,7 @@ int add_repo_to_db(sqlite3 *dbh, const char *alias, const char *path) {
   sprintf(fullquery, query, alias, abspath);
   status = sqlite3_exec(dbh, fullquery, NULL, NULL, NULL);
   free(fullquery);
+
   return status;
 }
 
@@ -172,5 +173,30 @@ sqlite3 *get_db_handle(void) {
     return NULL;
 
   return dbh;
+}
+
+/*
+ * remove_repo_from_db()
+ *
+ * Removes a repository from the
+ * database. Returns the removal status,
+ * or SQLITE_ERROR.
+ */
+int remove_repo_from_db(sqlite3 *dbh, const char *alias) {
+  int status = SQLITE_ERROR;
+  char *fullquery;
+
+  static const char *query = "DELETE FROM "
+    "repos_table WHERE aliases=\"%s\"";
+
+  if ((fullquery = malloc(strlen(query)
+    + strlen(alias) )) == NULL)
+    return status;
+
+  sprintf(fullquery, query, alias);
+  status = sqlite3_exec(dbh, fullquery, NULL, NULL, NULL);
+  free(fullquery);
+
+  return status;
 }
 

@@ -15,6 +15,7 @@ int add_repo_to_db(sqlite3 *dbh, const char *alias, const char *path);
 void close_db_handle(sqlite3 *dbh);
 int foreach_repo(sqlite3 *dbh, db_iter_func_t function);
 sqlite3 *get_db_handle(void);
+int remove_repo_from_db(sqlite3 *dbh, const char *alias);
 
 #endif
 
