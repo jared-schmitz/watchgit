@@ -10,6 +10,10 @@
 #include <stdio.h>
 #include <string.h>
 
+int print_repo_path(const char *path) {
+  printf("%s\n", path);
+}
+
 int main(int argc, const char *argv[]) {
   int i, status = 0;
   sqlite3 *dbh;
@@ -31,6 +35,15 @@ int main(int argc, const char *argv[]) {
     for (i = 2; i < argc; i++)
       if (add_repo_to_db(dbh, argv[i]) == SQLITE_CONSTRAINT)
         printf("%s already tracked; ignoring.\n", argv[i]);
+  }
+
+  else if (!strcmp(argv[1], "list")) {
+    if (argc != 2) {
+      printf("Usage: %s list\n", argv[0]);
+      return 1;
+    }
+
+    foreach_repo(dbh, print_repo_path);
   }
 
   close_db_handle(dbh);

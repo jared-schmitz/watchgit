@@ -9,6 +9,7 @@
 #define DB_LOCATION "~/.watchgit.db"
 #endif
 
+#include "db.h"
 #include <errno.h>
 #include <limits.h>
 #include <sqlite3.h>
@@ -20,6 +21,8 @@
 #include <wordexp.h>
 
 static sqlite3 *create_new_db(const char *path);
+static int foreach_repo_callback(void * callback_,
+  int argc, char **argv, char **col_name);
 
 /*
  * add_repo_to_db()
@@ -79,7 +82,42 @@ static sqlite3 *create_new_db(const char *path) {
 }
 
 /*
- * get_db_handle():
+ * foreach_repo()
+ *
+ * Executes a callback function for
+ * every repository in the database.
+ *
+ * TODO: Don't use sqlite3_exec so
+ * we don't have to do illegal casts.
+ */
+int foreach_repo(sqlite3 *dbh, db_iter_func_t function) {
+  if (sqlite3_exec(dbh, "SELECT paths FROM repos_table",
+    foreach_repo_callback, (void*) function, NULL) != SQLITE_OK)
+    return -1;
+
+  return 0;
+}
+
+/*
+ * foreach_repo_callback()
+ *
+ * Indirectly invoked by foreach_repo
+ * when retrieving database results.
+ */
+static int foreach_repo_callback(void * callback_,
+  int argc, char **argv, char **col_name) {
+  db_iter_func_t callback = (db_iter_func_t) callback_;
+  int i = argc, status = 0;
+  (void) col_name;
+
+  for (i = 0; i < argc; i++)
+    status |= callback(argv[i]);
+
+  return status;
+}
+
+/*
+ * get_db_handle()
  *
  * Gets a handle to the SQLite database.
  * Creates a new database if none exists.
