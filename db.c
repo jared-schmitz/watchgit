@@ -104,9 +104,6 @@ static sqlite3 *create_new_db(const char *path) {
  *
  * Executes a callback function for
  * every repository in the database.
- *
- * TODO: Don't use sqlite3_exec so
- * we don't have to do illegal casts.
  */
 int foreach_repo(sqlite3 *dbh, db_iter_func_t function) {
   struct callback_container container;
@@ -117,6 +114,34 @@ int foreach_repo(sqlite3 *dbh, db_iter_func_t function) {
     return -1;
 
   return 0;
+}
+
+/*
+ * forsome_repos()
+ *
+ * Executes a callback function for
+ * some repositories in the database.
+ */
+int forsome_repos(sqlite3 *dbh,
+  db_iter_func_t function, const char *alias) {
+  struct callback_container container;
+  int status = SQLITE_ERROR;
+  char *fullquery;
+
+  static const char *query = "SELECT paths FROM "
+    "repos_table WHERE aliases=\"%s\"";
+
+  container.callback = function;
+  if ((fullquery = malloc(strlen(query)
+    + strlen(alias) )) == NULL)
+    return status;
+
+  sprintf(fullquery, query, alias);
+  status = sqlite3_exec(dbh, fullquery,
+    foreach_repo_callback, &container, NULL);
+
+  free(fullquery);
+  return status;
 }
 
 /*

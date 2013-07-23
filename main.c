@@ -67,6 +67,11 @@ int main(int argc, const char *argv[]) {
     foreach_repo(dbh, print_repo_status);
   }
 
+  else {
+    printf("Unknown command.\n");
+    return 1;
+  }
+
   close_db_handle(dbh);
   return status;
 }
