@@ -9,6 +9,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /*
  * print_repo_path()
@@ -16,8 +17,10 @@
  * Simply prints out the path to the
  * give repository (a puts() call).
  */
-int print_repo_path(const char *path) {
-  printf("%s\n", path);
+int print_repo_path(const char *col_name, const char *thing) {
+  (!strcmp(col_name, "aliases"))
+    ? printf("%s: ", thing)
+    : printf("%s\n", thing);
 
   return 0;
 }
@@ -31,10 +34,13 @@ int print_repo_path(const char *path) {
  * TODO: Replace ugly system() call
  * with a proper fork() and exec().
  */
-int print_repo_status(const char *path) {
+int print_repo_status(const char *col_name, const char *thing) {
   char command[PATH_MAX + 128];
 
-  sprintf(command, "cd %s && git status", path);
+  if (strcmp(col_name, "paths"))
+    return 0;
+
+  sprintf(command, "cd %s && git status", thing);
   return system(command);
 }
 

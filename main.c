@@ -12,14 +12,14 @@
 #include <string.h>
 
 int main(int argc, const char *argv[]) {
-  int i, status = 0;
+  int status = 0;
   sqlite3 *dbh;
 
   if (argc < 2) {
     printf("Usage: %s <command> ...\n\n", argv[0]);
 
     printf("Commands:\n"
-      "   add [paths]\n"
+      "   add <alias> <path>\n"
       "   list\n"
       "   status\n");
 
@@ -30,14 +30,13 @@ int main(int argc, const char *argv[]) {
     return 1;
 
   if (!strcmp(argv[1], "add")) {
-    if (argc < 3) {
-      printf("Usage: %s add [paths]\n", argv[0]);
+    if (argc != 4) {
+      printf("Usage: %s add <alias> <path>\n", argv[0]);
       return 1;
     }
 
-    for (i = 2; i < argc; i++)
-      if (add_repo_to_db(dbh, argv[i]) == SQLITE_CONSTRAINT)
-        printf("%s already tracked; ignoring.\n", argv[i]);
+    if (add_repo_to_db(dbh, argv[2], argv[3]) == SQLITE_CONSTRAINT)
+      printf("alias or path already tracked; ignoring.\n");
   }
 
   else if (!strcmp(argv[1], "list")) {

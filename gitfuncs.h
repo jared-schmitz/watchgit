@@ -5,6 +5,6 @@
  * file 'LICENSE', which is part of this source code package.
  */
 
-int print_repo_path(const char *path);
-int print_repo_status(const char *path);
+int print_repo_path(const char *col_name, const char *path);
+int print_repo_status(const char *col_name, const char *path);
 

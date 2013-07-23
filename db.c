@@ -37,17 +37,27 @@ static int foreach_repo_callback(void *container,
  * database. Returns the insert status,
  * or SQLITE_ERROR.
  */
-int add_repo_to_db(sqlite3 *dbh, const char *path) {
-  static const char *query = "INSERT INTO repos_table (paths) VALUES(\"%s\")";
-  char abspath[PATH_MAX], fullquery[PATH_MAX + 128];
+int add_repo_to_db(sqlite3 *dbh, const char *alias, const char *path) {
+  char abspath[PATH_MAX], *fullquery;
+  int status = SQLITE_ERROR;
+
+  static const char *query = "INSERT INTO "
+    "repos_table (aliases, paths) VALUES("
+    "\"%s\", \"%s\")";
+
+  if ((fullquery = malloc(strlen(query) +
+    sizeof(abspath) + strlen(alias) + 1)) == NULL)
+    return status;
 
   if (realpath(path, abspath) == NULL) {
     perror("realpath");
-    return SQLITE_ERROR;
+    return status;
   }
 
-  sprintf(fullquery, query, abspath);
-  return sqlite3_exec(dbh, fullquery, NULL, NULL, NULL);
+  sprintf(fullquery, query, alias, abspath);
+  status = sqlite3_exec(dbh, fullquery, NULL, NULL, NULL);
+  free(fullquery);
+  return status;
 }
 
 /*
@@ -77,7 +87,8 @@ static sqlite3 *create_new_db(const char *path) {
   }
 
   if (sqlite3_exec(dbh, "CREATE TABLE repos_table(id INTEGER PRIMARY KEY "
-    "AUTOINCREMENT, paths TEXT UNIQUE);", NULL, NULL, NULL) != SQLITE_OK) {
+    "AUTOINCREMENT, aliases TEXT UNIQUE, paths TEXT UNIQUE);", NULL, NULL,
+    NULL) != SQLITE_OK) {
     sqlite3_close(dbh);
 
     unlink(DB_LOCATION);
@@ -100,7 +111,7 @@ int foreach_repo(sqlite3 *dbh, db_iter_func_t function) {
   struct callback_container container;
   container.callback = function;
 
-  if (sqlite3_exec(dbh, "SELECT paths FROM repos_table",
+  if (sqlite3_exec(dbh, "SELECT aliases, paths FROM repos_table",
     foreach_repo_callback, &container, NULL) != SQLITE_OK)
     return -1;
 
@@ -122,7 +133,7 @@ static int foreach_repo_callback(void *container_,
   container = (struct callback_container*) container_;
 
   for (i = 0; i < argc; i++)
-    status |= container->callback(argv[i]);
+    status |= container->callback(col_name[i], argv[i]);
 
   return status;
 }
