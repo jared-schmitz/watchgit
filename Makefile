@@ -1,4 +1,4 @@
-CFLAGS := -Wall -Wextra -std=c99 -D_XOPEN_SOURCE=500 -pedantic -Os -march=native
+CFLAGS := -Wall -Wextra -ansi -pedantic -D_XOPEN_SOURCE=500 -Os
 LDFLAGS := -Wl,-O1
 LIBS = -lsqlite3
 

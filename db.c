@@ -39,7 +39,7 @@ static int foreach_repo_callback(void *container,
  */
 int add_repo_to_db(sqlite3 *dbh, const char *path) {
   static const char *query = "INSERT INTO repos_table (paths) VALUES(\"%s\")";
-  char abspath[PATH_MAX], fullquery[PATH_MAX + strlen(query)];
+  char abspath[PATH_MAX], fullquery[PATH_MAX + 128];
 
   if (realpath(path, abspath) == NULL) {
     perror("realpath");
