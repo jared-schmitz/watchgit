@@ -6,15 +6,10 @@
  */
 
 #include "db.h"
+#include "gitfuncs.h"
 #include <sqlite3.h>
 #include <stdio.h>
 #include <string.h>
-
-int print_repo_path(const char *path) {
-  printf("%s\n", path);
-
-  return 0;
-}
 
 int main(int argc, const char *argv[]) {
   int i, status = 0;
@@ -25,7 +20,8 @@ int main(int argc, const char *argv[]) {
 
     printf("Commands:\n"
       "   add [paths]\n"
-      "   list\n");
+      "   list\n"
+      "   status\n");
 
     return 0;
   }
@@ -34,7 +30,7 @@ int main(int argc, const char *argv[]) {
     return 1;
 
   if (!strcmp(argv[1], "add")) {
-    if (argc != 3) {
+    if (argc < 3) {
       printf("Usage: %s add [paths]\n", argv[0]);
       return 1;
     }
@@ -51,6 +47,15 @@ int main(int argc, const char *argv[]) {
     }
 
     foreach_repo(dbh, print_repo_path);
+  }
+
+  else if (!strcmp(argv[1], "status")) {
+    if (argc != 2) {
+      printf("Usage: %s status\n", argv[0]);
+      return 1;
+    }
+
+    foreach_repo(dbh, print_repo_status);
   }
 
   close_db_handle(dbh);
