@@ -29,7 +29,8 @@ int main(int argc, const char *argv[]) {
     }
 
     for (i = 2; i < argc; i++)
-      add_repo_to_db(dbh, argv[i]);
+      if (add_repo_to_db(dbh, argv[i]) == SQLITE_CONSTRAINT)
+        printf("%s already tracked; ignoring.\n", argv[i]);
   }
 
   close_db_handle(dbh);
