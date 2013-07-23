@@ -20,8 +20,14 @@
 #include <unistd.h>
 #include <wordexp.h>
 
+/* void* != funcptr */
+/* So just wrap it! */
+struct callback_container {
+  db_iter_func_t callback;
+};
+
 static sqlite3 *create_new_db(const char *path);
-static int foreach_repo_callback(void * callback_,
+static int foreach_repo_callback(void *container,
   int argc, char **argv, char **col_name);
 
 /*
@@ -91,8 +97,11 @@ static sqlite3 *create_new_db(const char *path) {
  * we don't have to do illegal casts.
  */
 int foreach_repo(sqlite3 *dbh, db_iter_func_t function) {
+  struct callback_container container;
+  container.callback = function;
+
   if (sqlite3_exec(dbh, "SELECT paths FROM repos_table",
-    foreach_repo_callback, (void*) function, NULL) != SQLITE_OK)
+    foreach_repo_callback, &container, NULL) != SQLITE_OK)
     return -1;
 
   return 0;
@@ -104,14 +113,16 @@ int foreach_repo(sqlite3 *dbh, db_iter_func_t function) {
  * Indirectly invoked by foreach_repo
  * when retrieving database results.
  */
-static int foreach_repo_callback(void * callback_,
+static int foreach_repo_callback(void *container_,
   int argc, char **argv, char **col_name) {
-  db_iter_func_t callback = (db_iter_func_t) callback_;
+  struct callback_container *container;
   int i = argc, status = 0;
   (void) col_name;
 
+  container = (struct callback_container*) container_;
+
   for (i = 0; i < argc; i++)
-    status |= callback(argv[i]);
+    status |= container->callback(argv[i]);
 
   return status;
 }

@@ -12,6 +12,8 @@
 
 int print_repo_path(const char *path) {
   printf("%s\n", path);
+
+  return 0;
 }
 
 int main(int argc, const char *argv[]) {
@@ -19,7 +21,12 @@ int main(int argc, const char *argv[]) {
   sqlite3 *dbh;
 
   if (argc < 2) {
-    printf("Usage: %s <command> ...\n", argv[0]);
+    printf("Usage: %s <command> ...\n\n", argv[0]);
+
+    printf("Commands:\n"
+      "   add [paths]\n"
+      "   list\n");
+
     return 0;
   }
 
