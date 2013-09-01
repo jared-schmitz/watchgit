@@ -42,7 +42,9 @@ int print_repo_status(const char *col_name, const char *thing) {
     return 0;
   }
 
-  sprintf(command, "cd %s && git status -s && echo ''", thing);
+  snprintf(command, sizeof(command), "cd %s && git log --abbrev-commit "
+    "--pretty=oneline -n3 && git status -sb && echo ''", thing);
+
   return system(command);
 }
 
