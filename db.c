@@ -29,6 +29,8 @@ struct callback_container {
 static sqlite3 *create_new_db(const char *path);
 static int foreach_repo_callback(void *container,
   int argc, char **argv, char **col_name);
+static int schema_version_callback(void *version,
+  int argc, char **argv, char **col_name);
 
 /*
  * add_repo_to_db()
@@ -80,6 +82,7 @@ void close_db_handle(sqlite3 *dbh) {
  * schema. Returns handle to file.
  */
 static sqlite3 *create_new_db(const char *path) {
+  char query[128];
   sqlite3 *dbh;
 
   if (sqlite3_open(path, &dbh) != SQLITE_OK) {
@@ -89,14 +92,22 @@ static sqlite3 *create_new_db(const char *path) {
 
   if (sqlite3_exec(dbh, "CREATE TABLE repos_table(id INTEGER PRIMARY KEY "
     "AUTOINCREMENT, aliases TEXT UNIQUE, paths TEXT UNIQUE);", NULL, NULL,
-    NULL) != SQLITE_OK) {
-    sqlite3_close(dbh);
+    NULL) != SQLITE_OK)
+    goto error;
 
-    unlink(DB_LOCATION);
-    return NULL;
-  }
+  snprintf(query, sizeof(query),
+    "PRAGMA schema_version = %u\n",
+    SCHEMA_VERSION);
+
+  if (sqlite3_exec(dbh, query, NULL, NULL, NULL) != SQLITE_OK)
+    goto error;
 
   return dbh;
+
+error:
+  sqlite3_close(dbh);
+  unlink(path);
+  return NULL;
 }
 
 /*
@@ -197,7 +208,31 @@ sqlite3 *get_db_handle(void) {
     SQLITE_OPEN_READWRITE, NULL) != SQLITE_OK)
     return NULL;
 
+  if (get_schema_version(dbh) != SCHEMA_VERSION) {
+    printf("Corrupt database or old schema.\n");
+    printf("DB: %s\n", path);
+
+    close_db_handle(dbh);
+    dbh = NULL;
+  }
+
   return dbh;
+}
+
+/*
+ * get_schema_version()
+ *
+ * Returns the schema version as
+ * reported by the database.
+ */
+int get_schema_version(sqlite3 *dbh) {
+  int version;
+
+  if (sqlite3_exec(dbh, "PRAGMA schema_version",
+    schema_version_callback, &version, NULL) != SQLITE_OK)
+    return -1;
+
+  return version;
 }
 
 /*
@@ -223,5 +258,32 @@ int remove_repo_from_db(sqlite3 *dbh, const char *alias) {
   free(fullquery);
 
   return status;
+}
+
+/*
+ * schema_version_callback()
+ *
+ * Called when reading schema_version
+ * from the database; returns version.
+ */
+static int schema_version_callback(void *version_,
+  int argc, char **argv, char **col_name) {
+  int *version = (int*) version_;
+  char *endptr;
+  long int val;
+
+  if (argc != 1 || strcmp(col_name[0], "schema_version")) {
+    *version = -1;
+    return -1;
+  }
+
+  val = strtol(argv[0], &endptr, 10);
+  if (argv[0][0] == '\0' || endptr == NULL || *endptr != '\0') {
+    *version = -1;
+    return -1;
+  }
+
+  *version= val;
+  return 0;
 }
 
