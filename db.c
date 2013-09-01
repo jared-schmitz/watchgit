@@ -117,11 +117,14 @@ error:
  * every repository in the database.
  */
 int foreach_repo(sqlite3 *dbh, db_iter_func_t function) {
+  static const char *query = "SELECT aliases, paths "
+    "FROM repos_table ORDER BY aliases ASC";
+
   struct callback_container container;
   container.callback = function;
 
-  if (sqlite3_exec(dbh, "SELECT aliases, paths FROM repos_table",
-    foreach_repo_callback, &container, NULL) != SQLITE_OK)
+  if (sqlite3_exec(dbh, query, foreach_repo_callback,
+    &container, NULL) != SQLITE_OK)
     return -1;
 
   return 0;
