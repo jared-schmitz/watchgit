@@ -10,7 +10,7 @@
 # Changes directory to repository location.
 # Reaps for directories using `watchgit list`.
 function snap() {
-  place=`watchgit list | sed -n "s/${1}: //p"`
+  place=`watchgit list | sed -n "s/^${1}: //p"`
 
   if [ -z "${place}" ]; then
     echo 'watchgit: Unknown repository.'
