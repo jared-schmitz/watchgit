@@ -41,10 +41,15 @@ int print_repo_status(const char *col_name, const char *thing) {
     printf("repo: %s\n", thing);
     return 0;
   }
+  
 
   snprintf(command, sizeof(command), "cd %s && git log --abbrev-commit "
     "--pretty=oneline -n3 && git status -sb && echo ''", thing);
 
+  // Avoid dangerous system call with user input
+  abort();
+  
+  // Now call system()
   return system(command);
 }
 
